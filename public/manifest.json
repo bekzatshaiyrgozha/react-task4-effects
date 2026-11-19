@@ -1,0 +1,23 @@
+{
+  "id": "/",
+  "name": "Mini Library — Progressive Web App",
+  "short_name": "Mini Library",
+  "description": "Manage your home library and discover books from Open Library. Works offline.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#2f6f62",
+  "background_color": "#f4f1ea",
+  "lang": "en",
+  "categories": ["books", "education", "productivity"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Discover books", "url": "/discover", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Dashboard", "url": "/dashboard", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

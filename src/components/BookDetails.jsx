@@ -1,7 +1,7 @@
 function BookDetails({ status, book, error, isBusy, onRetry, onToggleStatus, onEdit, onDelete }) {
   if (status === "idle") {
     return (
-      <section className="panel details">
+      <section className="panel details" id="book-details">
         <div className="state">👈 Select a book to see its details</div>
       </section>
     );
@@ -9,7 +9,7 @@ function BookDetails({ status, book, error, isBusy, onRetry, onToggleStatus, onE
 
   if (status === "loading") {
     return (
-      <section className="panel details">
+      <section className="panel details" id="book-details">
         <div className="state">
           <span className="spinner" />
           Loading details...
@@ -20,7 +20,7 @@ function BookDetails({ status, book, error, isBusy, onRetry, onToggleStatus, onE
 
   if (status === "error") {
     return (
-      <section className="panel details">
+      <section className="panel details" id="book-details">
         <div className="state state-error">
           <p>Could not load details: {error}</p>
           <button className="btn" onClick={onRetry}>
@@ -34,7 +34,7 @@ function BookDetails({ status, book, error, isBusy, onRetry, onToggleStatus, onE
   const isAvailable = book.status !== "borrowed";
 
   return (
-    <section className="panel details">
+    <section className="panel details" id="book-details">
       <div className="details-top">
         <div>
           <h2>{book.name}</h2>

@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#2f6f62" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+    <title>You are offline · Mini Library</title>
+    <!-- Everything is inline: this page must work with no network at all. -->
+    <style>
+      :root {
+        --bg: #f4f1ea;
+        --card: #ffffff;
+        --text: #2b2a28;
+        --muted: #6f6a61;
+        --border: #e4dfd4;
+        --accent: #2f6f62;
+        --accent-light: #e3f0ec;
+        --danger: #b4443a;
+        --danger-light: #f8e4e1;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        display: grid;
+        place-items: center;
+        padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+      .card {
+        width: 100%;
+        max-width: 440px;
+        padding: 32px 24px;
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: var(--card);
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(43, 42, 40, 0.06);
+      }
+      .icon {
+        width: 88px;
+        height: 88px;
+        margin: 0 auto 16px;
+        display: grid;
+        place-items: center;
+        border-radius: 24px;
+        background: var(--accent-light);
+      }
+      h1 { margin: 0 0 8px; font-size: 24px; line-height: 1.25; }
+      p { margin: 0 0 12px; color: var(--muted); }
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 4px 0 20px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: var(--danger-light);
+        color: var(--danger);
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .status::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      .status.online { background: var(--accent-light); color: var(--accent); }
+      .actions { display: flex; flex-direction: column; gap: 10px; }
+      button, a.btn {
+        min-height: 48px;
+        padding: 12px 18px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--text);
+        font: inherit;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+      button:disabled { opacity: 0.6; cursor: progress; }
+      button:focus-visible, a.btn:focus-visible { outline: 3px solid #9cc9bd; outline-offset: 2px; }
+      .hint { margin-top: 20px; font-size: 14px; text-align: left; }
+      .hint ul { margin: 6px 0 0; padding-left: 20px; }
+      #message { min-height: 24px; margin: 14px 0 0; font-size: 14px; }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <div class="icon" aria-hidden="true">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2f6f62" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 2l20 20" />
+          <path d="M8.5 16.5a5 5 0 0 1 7 0" />
+          <path d="M5 12.86a10 10 0 0 1 5.17-2.69" />
+          <path d="M19 12.86a10 10 0 0 0-2.29-1.68" />
+          <path d="M2 8.82a15 15 0 0 1 4.17-2.65" />
+          <path d="M10.66 5a15 15 0 0 1 11.34 3.82" />
+          <path d="M12 20h.01" />
+        </svg>
+      </div>
+
+      <h1>You are offline</h1>
+      <p>This page could not be loaded because there is no internet connection and it was not saved on this device yet.</p>
+
+      <div id="status" class="status" role="status" aria-live="polite">Offline</div>
+
+      <div class="actions">
+        <button id="retry" class="primary" type="button">Retry connection</button>
+        <a class="btn" href="/">Open my library</a>
+      </div>
+
+      <p id="message" aria-live="polite"></p>
+
+      <div class="hint">
+        <strong>Still available offline:</strong>
+        <ul>
+          <li>your library — books, edits, borrow / return</li>
+          <li>pages you have already visited</li>
+          <li>Open Library books you have already opened</li>
+        </ul>
+      </div>
+    </main>
+
+    <script>
+      (function () {
+        var params = new URLSearchParams(location.search);
+        var from = params.get("from");
+        // only same-origin paths, never an external URL
+        var target = from && from.charAt(0) === "/" && from.charAt(1) !== "/" ? from : null;
+        if (!target && location.pathname !== "/offline" && location.pathname !== "/offline.html") {
+          target = location.pathname + location.search; // SW served this page for a failed navigation
+        }
+        target = target || "/";
+
+        var statusEl = document.getElementById("status");
+        var messageEl = document.getElementById("message");
+        var retryBtn = document.getElementById("retry");
+
+        function showStatus(online) {
+          statusEl.textContent = online ? "Back online" : "Offline";
+          statusEl.className = "status" + (online ? " online" : "");
+        }
+
+        // A real request, not just navigator.onLine.
+        // "connectivity-check" makes the service worker skip its caches.
+        function checkConnection() {
+          return fetch("/version.json?connectivity-check=" + Date.now(), { cache: "no-store" })
+            .then(function (response) { return response.ok; })
+            .catch(function () { return false; });
+        }
+
+        function retry() {
+          retryBtn.disabled = true;
+          retryBtn.textContent = "Checking...";
+          messageEl.textContent = "";
+
+          checkConnection().then(function (online) {
+            showStatus(online);
+            if (online) {
+              messageEl.textContent = "Connection restored. Opening the page...";
+              location.replace(target);
+              return;
+            }
+            retryBtn.disabled = false;
+            retryBtn.textContent = "Retry connection";
+            messageEl.textContent = "Still no connection. Check Wi-Fi or mobile data and try again.";
+          });
+        }
+
+        retryBtn.addEventListener("click", retry);
+        window.addEventListener("online", retry); // come back automatically
+        window.addEventListener("offline", function () { showStatus(false); });
+        showStatus(false);
+      })();
+    </script>
+  </body>
+</html>
